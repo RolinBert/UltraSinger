@@ -9,7 +9,7 @@ import Levenshtein
 import librosa
 from tqdm import tqdm
 
-from modules import os_helper
+from modules import os_helper, timer
 from modules.Audio.denoise import ffmpeg_reduce_noise
 from modules.Audio.separation import separate_audio
 from modules.Audio.vocal_chunks import (
