@@ -1,12 +1,15 @@
 """Pitcher module"""
 
 import sys
+import os
 
+import torch
 import torchcrepe
 from torch.cuda import OutOfMemoryError
 
 from modules.console_colors import ULTRASINGER_HEAD, blue_highlighted, red_highlighted
 from modules.Pitcher.pitched_data import PitchedData
+from modules.plot import plot
 
 DEFAULT_MODEL: str = "full"
 SUPPORTED_MODELS: list[str] = ["tiny", "full"]
@@ -25,8 +28,10 @@ def get_pitch_with_crepe_file(
     # Load audio
     audio, sample_rate = torchcrepe.load.audio(filename)
 
+    output_path = os.path.abspath(os.path.dirname(os.path.abspath(filename)))
+
     return get_pitch_with_crepe(
-        audio, sample_rate, model, device, batch_size, step_size
+        audio, sample_rate, model, device, batch_size, step_size, output_path
     )
 
 
@@ -37,6 +42,7 @@ def get_pitch_with_crepe(
     device: str = "cpu",
     batch_size: int = None,
     step_size: int = 10,
+    output_path: str = ".",
 ) -> PitchedData:
     """Pitch with crepe"""
 
@@ -57,8 +63,10 @@ def get_pitch_with_crepe(
     fmin = 0
     fmax = 2006
 
+    frequencies_tensor = []
+    confidence_tensor = []
     try:
-        frequencies, confidence = torchcrepe.predict(
+        frequencies_tensor, confidence_tensor = torchcrepe.predict(
             audio,
             sample_rate,
             hop_length,
@@ -69,8 +77,6 @@ def get_pitch_with_crepe(
             batch_size=batch_size,
             device=device,
         )
-        frequencies = frequencies.detach().cpu().numpy().squeeze(0)
-        confidence = confidence.detach().cpu().numpy().squeeze(0)
     except OutOfMemoryError as oom_exception:
         print(oom_exception)
         print(
@@ -78,11 +84,41 @@ def get_pitch_with_crepe(
         )
         sys.exit(1)
 
+
+    plot(tensors_to_pitched_data(frequencies_tensor, confidence_tensor, step_size_seconds), output_path, title="0 prediction")
+
+    confidence_tensor = torchcrepe.threshold.Silence(-60.)(confidence_tensor,
+                                                 audio,
+                                                 sample_rate,
+                                                 hop_length)
+    plot(tensors_to_pitched_data(frequencies_tensor, confidence_tensor, step_size_seconds), output_path, title="1 silence removal")
+
+    # We'll use a 30 millisecond window assuming a hop length of 10 milliseconds
+    win_length = 3
+
+    # Median filter noisy confidence value
+    confidence_tensor = torchcrepe.filter.median(confidence_tensor, win_length)
+    plot(tensors_to_pitched_data(frequencies_tensor, confidence_tensor, step_size_seconds), output_path, title="2 noisy confidence removal")
+
+    # Remove inharmonic regions
+    frequencies_tensor = torchcrepe.threshold.At(.21)(frequencies_tensor, confidence_tensor)
+    plot(tensors_to_pitched_data(frequencies_tensor, confidence_tensor, step_size_seconds), output_path, title="3 inharmonic region removal")
+
+    # Optionally smooth pitch to remove quantization artifacts
+    frequencies_tensor = torchcrepe.filter.mean(frequencies_tensor, win_length)
+    plot(tensors_to_pitched_data(frequencies_tensor, confidence_tensor, step_size_seconds), output_path, title="4 quantization artifacts removal")
+
+    return tensors_to_pitched_data(frequencies_tensor, confidence_tensor, step_size_seconds)
+
+
+def tensors_to_pitched_data(frequencies_tensor: torch.Tensor, confidence_tensor: torch.Tensor, step_size_seconds: float) -> PitchedData:
+    """Convert tensors to plain arrays"""
+    frequencies = frequencies_tensor.detach().cpu().numpy().squeeze(0)
+    confidence = confidence_tensor.detach().cpu().numpy().squeeze(0)
     times = [
         round(i * step_size_seconds, TIMES_DECIMAL_PLACES)
         for i, x in enumerate(confidence)
     ]
-
     return PitchedData(times, frequencies, confidence)
 
 

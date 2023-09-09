@@ -351,7 +351,7 @@ def run() -> None:
 
     # Create plot
     if settings.create_plot:
-        plot(pitched_data, transcribed_data, midi_notes, song_output)
+        plot(pitched_data, song_output, transcribed_data, midi_notes,)
 
     # Write Ultrastar txt
     if is_audio:
