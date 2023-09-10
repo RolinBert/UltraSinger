@@ -22,6 +22,8 @@ def get_pitch_with_crepe_file(
     device: str = "cpu",
     batch_size: int = None,
     step_size: int = 10,
+    frequency_boundary_lower: int = 0,
+    frequency_boundary_upper: int = 2006,
 ) -> PitchedData:
     """Pitch with crepe"""
 
@@ -31,7 +33,7 @@ def get_pitch_with_crepe_file(
     output_path = os.path.abspath(os.path.dirname(os.path.abspath(filename)))
 
     return get_pitch_with_crepe(
-        audio, sample_rate, model, device, batch_size, step_size, output_path
+        audio, sample_rate, model, device, batch_size, step_size, output_path=output_path, frequency_boundary_lower=frequency_boundary_lower, frequency_boundary_upper=frequency_boundary_upper
     )
 
 
@@ -42,6 +44,8 @@ def get_pitch_with_crepe(
     device: str = "cpu",
     batch_size: int = None,
     step_size: int = 10,
+    frequency_boundary_lower: int = 0,
+    frequency_boundary_upper: int = 2006,
     output_path: str = ".",
 ) -> PitchedData:
     """Pitch with crepe"""
@@ -60,9 +64,6 @@ def get_pitch_with_crepe(
     steps_per_second = 1 / step_size_seconds
     hop_length = sample_rate // steps_per_second
 
-    fmin = 0
-    fmax = 2006
-
     frequencies_tensor = []
     confidence_tensor = []
     try:
@@ -70,8 +71,8 @@ def get_pitch_with_crepe(
             audio,
             sample_rate,
             hop_length,
-            fmin,
-            fmax,
+            frequency_boundary_lower,
+            frequency_boundary_upper,
             model,
             return_periodicity=True,
             batch_size=batch_size,
@@ -101,8 +102,8 @@ def get_pitch_with_crepe(
     plot(tensors_to_pitched_data(frequencies_tensor, confidence_tensor, step_size_seconds), output_path, title="2 noisy confidence removal")
 
     # Remove inharmonic regions
-    frequencies_tensor = torchcrepe.threshold.At(.21)(frequencies_tensor, confidence_tensor)
-    plot(tensors_to_pitched_data(frequencies_tensor, confidence_tensor, step_size_seconds), output_path, title="3 inharmonic region removal")
+    # frequencies_tensor = torchcrepe.threshold.At(.21)(frequencies_tensor, confidence_tensor)
+    # plot(tensors_to_pitched_data(frequencies_tensor, confidence_tensor, step_size_seconds), output_path, title="3 inharmonic region removal")
 
     # Optionally smooth pitch to remove quantization artifacts
     frequencies_tensor = torchcrepe.filter.mean(frequencies_tensor, win_length)
@@ -123,7 +124,7 @@ def tensors_to_pitched_data(frequencies_tensor: torch.Tensor, confidence_tensor:
 
 
 def get_frequency_with_high_confidence(
-    frequencies: list[float], confidences: list[float], threshold=0.4
+    frequencies: list[float], confidences: list[float], threshold=0.
 ) -> list[float]:
     """Get frequency with high confidence"""
     conf_f = []

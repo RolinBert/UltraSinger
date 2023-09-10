@@ -13,13 +13,13 @@ class PitcherTest(unittest.TestCase):
         test_dir = os.path.dirname(os.path.abspath(__file__))
         root_dir = os.path.abspath(test_dir + "/../../..")
         # test_file_abs_path = os.path.abspath(root_dir + "/test_input/audio_denoised.wav")
-        test_file_abs_path = os.path.abspath(root_dir + "/test_input/test_denoised.wav")
-        # test_file_abs_path = os.path.abspath(root_dir + "/test_input/AnnenMayKantereit - Heute Abend wird es regnen_denoised.wav")
+        # test_file_abs_path = os.path.abspath(root_dir + "/test_input/test_denoised.wav")
+        test_file_abs_path = os.path.abspath(root_dir + "/test_input/AnnenMayKantereit - Heute Abend wird es regnen_denoised.wav")
         test_file_name = os.path.basename(test_file_abs_path)
         test_output = test_dir + "/test_output"
 
         # Act
-        test_subject.get_pitch_with_crepe_file(test_file_abs_path, 'full', 'cuda', batch_size=1024)
+        test_subject.get_pitch_with_crepe_file(test_file_abs_path, 'full', 'cuda', batch_size=1024, frequency_boundary_lower=0, frequency_boundary_upper=1000)
         # test_subject.get_pitch_with_crepe_file(test_file_abs_path, 'full', 'cpu', batch_size=1024)
 
         print("done")
