@@ -14,7 +14,9 @@ def m(note: str) -> float:
 
 class MidiCreatorTest(unittest.TestCase):
     def test_create_midi_notes_from_pitched_data(self):
-        
+
+        word = "test_word"
+
         # Arrange
         pitch_data = []
         pitch_data.append(flat_pitch(5, n('A2')))
@@ -29,11 +31,11 @@ class MidiCreatorTest(unittest.TestCase):
         ideal_midis.append(expect_midi('A2', 0, 5))
         ideal_midis.append(expect_midi('B2', 6, 5))
         ideal_midis.append(expect_midi('A2', 12, 5))
-        
+
         ideal_result = merge_expected_midis_to_expected_output(ideal_midis)
 
         # Act
-        result = test_subject.create_midi_note_from_pitched_data(0, merged_pitch_data.times[-1], merged_pitch_data)
+        result = test_subject.create_midi_note_from_pitched_data(0, merged_pitch_data.times[-1], merged_pitch_data, word)
 
         # Assert
         print(merged_pitch_data)

@@ -2,11 +2,8 @@ from modules.Pitcher import pitched_data
 import librosa
 
 def merge_pitch_data(datas: list[pitched_data.PitchedData], step_size: float = 0.1) -> pitched_data.PitchedData:
-  merged_data = pitched_data.PitchedData()
-  merged_data.times = []
-  merged_data.frequencies = []
-  merged_data.confidence = []
-  
+  merged_data = pitched_data.PitchedData(times=[], frequencies=[], confidence=[])
+
   offset = float(0)
   for data in datas:
     if (len(data.times) > 0):
@@ -20,7 +17,7 @@ def merge_pitch_data(datas: list[pitched_data.PitchedData], step_size: float = 0
 def apply_offset(offset: float) -> pitched_data.PitchedData:
   def with_offset(x: float):
     return x + offset
-  
+
   return with_offset
 
 def flat_pitch(duration: float, frequency: float, step_size: float = 0.1,  confidence: float = 1) -> pitched_data.PitchedData:
@@ -36,11 +33,8 @@ def flat_pitch(duration: float, frequency: float, step_size: float = 0.1,  confi
     frequencies.append(frequency)
     confidences.append(confidence)
 
-  data = pitched_data.PitchedData()
-  data.times = times
-  data.frequencies = frequencies
-  data.confidence = confidences
-  
+  data = pitched_data.PitchedData(times=times, frequencies=frequencies, confidence=confidences)
+
   return data
 
 def steady_pitch_change(duration: float, start_frequency: float, end_frequency: float, step_size: float = 0.1,  confidence: float = 1) -> pitched_data.PitchedData:
@@ -49,7 +43,7 @@ def steady_pitch_change(duration: float, start_frequency: float, end_frequency: 
   confidences = []
 
   step_size_decimal_points = len(str(step_size).split(".")[1])
-  
+
   steps = int(duration / step_size) + 1
 
   frequency_step_size = abs(start_frequency - end_frequency) / (steps - 1)
@@ -61,11 +55,8 @@ def steady_pitch_change(duration: float, start_frequency: float, end_frequency: 
     frequencies.append(start_frequency + (frequency_shift_factor * round(step * frequency_step_size, 1)))
     confidences.append(confidence)
 
-  data = pitched_data.PitchedData()
-  data.times = times
-  data.frequencies = frequencies
-  data.confidence = confidences
-  
+  data = pitched_data.PitchedData(times=times, frequencies=frequencies, confidence=confidences)
+
   return data
 
 def expect_midi(note: str, start_time: float, duration: float, step_size: float = 0.01) -> tuple[int, float, float]:
