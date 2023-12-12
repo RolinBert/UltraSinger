@@ -96,8 +96,7 @@ def calculate_score(pitched_data: PitchedData, ultrastar_class: UltrastarTxtValu
         ultrastar_class.words
     )
 
-    for i in enumerate(ultrastar_class.words):
-        pos = i[0]
+    for pos, word in enumerate(ultrastar_class.words):
         if ultrastar_class.words == "":
             continue
 
@@ -125,17 +124,17 @@ def calculate_score(pitched_data: PitchedData, ultrastar_class: UltrastarTxtValu
             if end_time < end or part == parts - 1:
                 end = end_time
             pitch_note = create_midi_note_from_pitched_data(
-                start, end, pitched_data
+                start, end, pitched_data, word
             )
 
-            if pitch_note[:-1] == ultrastar_note[:-1]:
+            if pitch_note[0].note[:-1] == ultrastar_note[:-1]:
                 # Ignore octave high
                 simple_points = add_point(
                     ultrastar_class.noteType[pos], simple_points
                 )
                 simple_part_line_bonus_points += 1
 
-            if pitch_note == ultrastar_note:
+            if pitch_note[0].note == ultrastar_note:
                 # Octave high must be the same
                 accurate_points = add_point(
                     ultrastar_class.noteType[pos], accurate_points

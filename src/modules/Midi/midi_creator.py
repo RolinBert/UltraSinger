@@ -2,6 +2,7 @@
 
 import math
 from collections import Counter
+from dataclasses import dataclass
 
 import librosa
 import numpy as np
@@ -95,12 +96,12 @@ def create_midi_notes_from_pitched_data(start_times: list[float], end_times: lis
 
     new_segments = []
 
-    for index in enumerate(start_times):
-        start_time = start_times[index]
+    for index, start_time in enumerate(start_times):
+        start_time = start_time
         end_time = end_times[index]
         word = str(words[index])
 
-        segments = create_midi_note_from_pitched_data(start_time, end_time, pitched_data)
+        segments = create_midi_note_from_pitched_data(start_time, end_time, pitched_data, word)
 
         segment_count = len(segments)
         if segment_count > 1:
@@ -110,7 +111,7 @@ def create_midi_notes_from_pitched_data(start_times: list[float], end_times: lis
             if word.endswith(" "):
                 word = word[:-1]
                 segments[-1].word += " "
-            
+
         segments[0].word = word
         new_segments.extend(segments)
 
@@ -119,7 +120,7 @@ def create_midi_notes_from_pitched_data(start_times: list[float], end_times: lis
     return new_segments
 
 
-def create_midi_note_from_pitched_data(start_time: float, end_time: float, pitched_data: PitchedData) -> list[Segment]:
+def create_midi_note_from_pitched_data(start_time: float, end_time: float, pitched_data: PitchedData, word: str) -> list[Segment]:
     """Create midi note from pitched data"""
 
     start = find_nearest_index(pitched_data.times, start_time)
@@ -138,4 +139,4 @@ def create_midi_note_from_pitched_data(start_time: float, end_time: float, pitch
 
     note = most_frequent(notes)[0][0]
 
-    return [Segment(note, start_time, end_time)]
+    return [Segment(note, start_time, end_time, word)]

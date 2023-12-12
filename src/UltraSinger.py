@@ -66,9 +66,8 @@ def convert_midi_notes_to_ultrastar_notes(midi_notes: list[str]) -> list[int]:
     print(f"{ULTRASINGER_HEAD} Creating Ultrastar notes from midi data")
 
     ultrastar_note_numbers = []
-    for i in enumerate(midi_notes):
-        pos = i[0]
-        note_number_librosa = librosa.note_to_midi(midi_notes[pos])
+    for note in midi_notes:
+        note_number_librosa = librosa.note_to_midi(note)
         pitch = ultrastar_converter.midi_note_to_ultrastar_note(
             note_number_librosa
         )
@@ -838,19 +837,25 @@ def pitch_audio(is_audio: bool, transcribed_data: list[TranscribedData], ultrast
             start_times.append(data.start)
             end_times.append(data.end)
             words.append(data.word)
-        midi_notes, new_start_times, new_end_times, new_words = create_midi_notes_from_pitched_data(
+        # midi_notes, new_start_times, new_end_times, new_words = create_midi_notes_from_pitched_data(
+        new_segments = create_midi_notes_from_pitched_data(
             start_times, end_times, words, pitched_data
         )
 
     else:
-        midi_notes, new_start_times, new_end_times, new_words = create_midi_notes_from_pitched_data(
+        new_segments = create_midi_notes_from_pitched_data(
             ultrastar_class.startTimes, ultrastar_class.endTimes, ultrastar_class.words, pitched_data
         )
+
+    midi_notes = []
+    for segment in new_segments:
+        midi_notes.append(segment.note)
+
     ultrastar_note_numbers = convert_midi_notes_to_ultrastar_notes(midi_notes)
 
     new_transcribed_data = []
-    for index in enumerate(midi_notes):
-        new_transcribed_data.append(TranscribedData({"word": new_words[index], "start": new_start_times[index], "end": new_end_times[index], "is_hyphen": None, "confidence": 1}))
+    for segment in new_segments:
+        new_transcribed_data.append(TranscribedData({"word": segment.word, "start": segment.start, "end": segment.end, "is_hyphen": None, "confidence": 1}))
 
     return midi_notes, pitched_data, ultrastar_note_numbers, new_transcribed_data
 
